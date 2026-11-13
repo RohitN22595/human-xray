@@ -4,143 +4,280 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#07110f" />
-  <meta name="description" content="A playful, browser-based camera mirror with an atmospheric x-ray inspired visual effect." />
-  <title>AFTERIMAGE — Camera Mirror</title>
+  <meta name="description" content="A live face-tracked anatomy mirror, rendered locally in your browser." />
+  <title>AFTERIMAGE — Anatomy Mirror</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    :root { color-scheme: dark; --ink:#eaf4eb; --muted:#81928a; --line:#26342e; --acid:#c4ff72; --panel:#0c1713; }
+    :root { color-scheme:dark; --ink:#eaf4eb; --muted:#81928a; --line:#26342e; --acid:#c4ff72; --cyan:#80f2dd; --panel:#0c1713 }
     * { box-sizing:border-box }
-    body { margin:0; min-height:100vh; background:#07110f; color:var(--ink); font-family:'Space Grotesk',sans-serif; }
+    body { margin:0; min-height:100vh; background:#07110f; color:var(--ink); font-family:'Space Grotesk',sans-serif }
     button { color:inherit; font:inherit; cursor:pointer }
-    .shell { max-width:1440px; margin:auto; padding:0 5.2vw 44px }
-    header { height:86px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line) }
-    .brand { display:flex; align-items:center; gap:12px; font-weight:700; letter-spacing:.12em; font-size:14px }
-    .brand-mark { width:28px; height:28px; display:grid; place-items:center; border:1px solid var(--acid); color:var(--acid); border-radius:50%; font-size:13px }
-    .topline,.eyebrow,.meta,.btn,.hint { font-family:'DM Mono',monospace; text-transform:uppercase; letter-spacing:.12em }
-    .topline { color:var(--muted); font-size:10px }
-    .topline span { color:var(--acid); margin-left:8px }
-    main { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(280px,.7fr); gap:5.4vw; padding-top:64px; align-items:start }
-    .eyebrow { color:var(--acid); font-size:10px; margin:0 0 18px }
-    h1 { font-size:clamp(46px,7vw,94px); letter-spacing:-.075em; line-height:.92; font-weight:500; margin:0; max-width:750px }
-    h1 em { color:var(--acid); font-style:normal }
-    .intro { color:#a5b3ac; max-width:480px; font-size:15px; line-height:1.7; margin:24px 0 30px }
-    .stage { position:relative; background:#111c18; border:1px solid #34453d; aspect-ratio:16/10; overflow:hidden; border-radius:4px; }
-    .stage:after { content:''; position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg,rgba(4,12,9,.5),transparent 25%,transparent 70%,rgba(4,12,9,.58)); z-index:2 }
-    #feed { width:100%; height:100%; object-fit:cover; transform:scaleX(-1); display:block; filter:grayscale(1) contrast(1.16) brightness(1.14) sepia(.2) hue-rotate(45deg) saturate(1.45); }
+    .shell { max-width:1480px; margin:auto; padding:0 5.2vw 40px }
+    header { height:78px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line) }
+    .brand { display:flex; align-items:center; gap:12px; font-weight:700; letter-spacing:.12em; font-size:13px }
+    .brand-mark { width:28px;height:28px;display:grid;place-items:center;border:1px solid var(--acid);color:var(--acid);border-radius:50%;font-size:13px }
+    .mono,.eyebrow,.meta,.btn,.hint,.mode { font-family:'DM Mono',monospace; text-transform:uppercase; letter-spacing:.12em }
+    .topline { color:var(--muted);font:10px 'DM Mono',monospace;letter-spacing:.1em }
+    .topline b { color:var(--acid);font-weight:400 }
+    main { display:grid;grid-template-columns:minmax(0,1.62fr) minmax(270px,.68fr);gap:4vw;padding-top:46px;align-items:start }
+    .eyebrow { color:var(--acid);font-size:10px;margin:0 0 14px }
+    h1 { font-size:clamp(43px,6vw,78px);letter-spacing:-.075em;line-height:.92;font-weight:500;margin:0;max-width:750px }
+    h1 em { color:var(--acid);font-style:normal }
+    .intro { color:#a5b3ac;max-width:550px;font-size:14px;line-height:1.65;margin:19px 0 23px }
+    .stage { position:relative;background:#111c18;border:1px solid #34453d;aspect-ratio:16/10;overflow:hidden;border-radius:4px }
+    .stage:after { content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(4,12,9,.54),transparent 20%,transparent 78%,rgba(4,12,9,.62));z-index:2 }
+    #feed,#overlay { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1) }
+    #feed { display:block;filter:grayscale(1) contrast(1.13) brightness(1.08) sepia(.22) hue-rotate(46deg) saturate(1.3) }
     #feed.off { display:none }
-    .placeholder { position:absolute; inset:0; display:grid; place-items:center; text-align:center; color:#75877e; background:radial-gradient(ellipse at center,#1b3025 0,#111c18 56%,#0c1512 100%); }
+    #overlay { z-index:1;pointer-events:none }
+    .placeholder { position:absolute;inset:0;z-index:0;display:grid;place-items:center;text-align:center;color:#75877e;background:radial-gradient(ellipse at center,#1b3025 0,#111c18 56%,#0c1512 100%) }
     .placeholder.hidden { display:none }
-    .silhouette { width:110px; height:172px; opacity:.22; position:relative; filter:drop-shadow(0 0 22px #baff72) }
-    .silhouette:before { content:''; display:block; margin:auto; width:62px;height:76px;border:1px solid var(--acid);border-radius:50% 50% 45% 45%; }
-    .silhouette:after { content:''; position:absolute; left:8px;right:8px;top:84px;height:82px;border:1px solid var(--acid);border-radius:48% 48% 8% 8%; }
-    .placeholder p { font:10px 'DM Mono',monospace; letter-spacing:.14em; text-transform:uppercase; margin:15px 0 0 }
-    .frame-label { position:absolute; z-index:3; top:18px; left:20px; font:10px 'DM Mono',monospace; color:#d8e7d8; letter-spacing:.12em }
-    .live { position:absolute; z-index:3; right:18px;top:17px;color:var(--acid);font:10px 'DM Mono',monospace;letter-spacing:.14em }
-    .live:before { content:''; display:inline-block; width:6px;height:6px;background:var(--acid);border-radius:50%;margin:0 8px 1px 0;box-shadow:0 0 10px var(--acid) }
-    .scanline { position:absolute; z-index:3; left:0;right:0;top:50%; height:1px;background:rgba(196,255,114,.48);box-shadow:0 0 16px rgba(196,255,114,.45);pointer-events:none }
-    .stage-footer { border:1px solid var(--line); border-top:0; padding:13px 17px; display:flex; justify-content:space-between; color:var(--muted);font:9px 'DM Mono',monospace;letter-spacing:.12em }
-    .controls { padding-top:11px }
-    .control-head { display:flex; justify-content:space-between;align-items:center;padding-bottom:17px;border-bottom:1px solid var(--line);margin-bottom:22px }
-    .control-head h2 { font-size:16px;font-weight:500;margin:0 }
-    .index { font:10px 'DM Mono',monospace;color:var(--muted) }
-    .btn { width:100%; padding:16px 18px; border:1px solid var(--acid); background:var(--acid); color:#101b0b; text-align:left; font-size:10px; font-weight:500; display:flex;justify-content:space-between;align-items:center;transition:.18s }
-    .btn:hover { background:#d7ff9c; transform:translateY(-1px) }
-    .btn.secondary { margin-top:10px;background:transparent;color:var(--ink);border-color:#405148 }
+    .ghost { width:110px;height:172px;opacity:.25;filter:drop-shadow(0 0 22px #baff72) }
+    .placeholder p { font:10px 'DM Mono',monospace;letter-spacing:.14em;text-transform:uppercase;margin:12px 0 0 }
+    .frame-label,.live { position:absolute;z-index:3;top:15px;font:9px 'DM Mono',monospace;letter-spacing:.13em;color:#d8e7d8 }
+    .frame-label { left:17px }.live { right:17px;color:var(--acid) }
+    .live:before { content:'';display:inline-block;width:6px;height:6px;background:var(--acid);border-radius:50%;margin:0 8px 1px 0;box-shadow:0 0 10px var(--acid) }
+    .scanline { position:absolute;z-index:3;left:0;right:0;top:48%;height:1px;background:rgba(196,255,114,.46);box-shadow:0 0 14px rgba(196,255,114,.4);pointer-events:none }
+    .stage-footer { border:1px solid var(--line);border-top:0;padding:12px 16px;display:flex;justify-content:space-between;gap:12px;color:var(--muted);font:9px 'DM Mono',monospace;letter-spacing:.1em }
+    .stage-footer b { color:var(--cyan);font-weight:400 }
+    .controls { padding-top:4px }
+    .control-head { display:flex;justify-content:space-between;align-items:center;padding-bottom:15px;border-bottom:1px solid var(--line);margin-bottom:19px }
+    .control-head h2 { font-size:15px;font-weight:500;margin:0 }
+    .index { font:9px 'DM Mono',monospace;color:var(--muted) }
+    .modes { display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:18px }
+    .mode { border:1px solid #34453d;background:transparent;color:#9baaa1;font-size:8px;padding:11px 4px;transition:.16s }
+    .mode:hover,.mode[aria-pressed="true"] { border-color:var(--acid);color:var(--acid);background:rgba(196,255,114,.06) }
+    .btn { width:100%;padding:15px 17px;border:1px solid var(--acid);background:var(--acid);color:#101b0b;text-align:left;font-size:10px;font-weight:500;display:flex;justify-content:space-between;align-items:center;transition:.18s }
+    .btn:hover { background:#d7ff9c;transform:translateY(-1px) }
+    .btn.secondary { margin-top:9px;background:transparent;color:var(--ink);border-color:#405148 }
     .btn.secondary:hover { border-color:var(--acid);color:var(--acid);background:transparent }
     .btn:disabled { opacity:.45;cursor:wait;transform:none }
-    .control-note { margin:18px 0 30px;color:#778980;font-size:12px;line-height:1.6 }
-    .slider-label { display:flex;justify-content:space-between;font:9px 'DM Mono',monospace;letter-spacing:.1em;color:#96a69c;margin:23px 0 12px }
-    input[type=range] { width:100%; accent-color:var(--acid);height:3px }
-    .disclaimer { margin-top:28px;border-left:2px solid #526e46;padding:11px 0 11px 14px;color:#84938b;font-size:11px;line-height:1.55 }
-    .disclaimer b { display:block;color:#bdcbbf;font:9px 'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px }
-    footer { margin-top:58px;padding-top:18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;color:#62736a;font:9px 'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase }
-    #error { display:none;color:#ff9a82;font-size:11px;line-height:1.55;margin-top:12px }
-    @media(max-width:800px) { .shell{padding:0 22px 28px} header{height:68px} main{grid-template-columns:1fr;gap:35px;padding-top:45px} .controls{padding-top:0} footer{margin-top:40px} }
-    @media(max-width:450px) { .topline{font-size:8px}.stage{aspect-ratio:4/3}.stage-footer{font-size:8px}.intro{font-size:14px} }
+    .control-note { margin:14px 0 18px;color:#778980;font-size:11px;line-height:1.6 }
+    .slider-label { display:flex;justify-content:space-between;font:9px 'DM Mono',monospace;letter-spacing:.1em;color:#96a69c;margin:21px 0 11px }
+    input[type=range] { width:100%;accent-color:var(--acid);height:3px }
+    .stats { display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:22px }
+    .stat { padding:12px 9px 12px 0 }.stat + .stat { border-left:1px solid var(--line);padding-left:13px }
+    .stat small { display:block;color:#75877e;font:8px 'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px }
+    .stat strong { color:#dbe8dc;font:12px 'DM Mono',monospace;font-weight:400 }
+    .disclaimer { margin-top:20px;border-left:2px solid #526e46;padding:9px 0 9px 12px;color:#84938b;font-size:10px;line-height:1.5 }
+    .disclaimer b { display:block;color:#bdcbbf;font:8px 'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px }
+    #error { display:none;color:#ff9a82;font-size:11px;line-height:1.5;margin-top:11px }
+    footer { margin-top:43px;padding-top:16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;color:#62736a;font:8px 'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase }
+    @media(max-width:850px) { .shell{padding:0 22px 28px}header{height:68px}main{grid-template-columns:1fr;gap:28px;padding-top:35px}.controls{padding-top:0}footer{margin-top:32px} }
+    @media(max-width:450px) { .topline{font-size:8px}.stage{aspect-ratio:4/3}.stage-footer{font-size:8px}.intro{font-size:13px}.mode{font-size:7px} }
   </style>
 </head>
 <body>
   <div class="shell">
-    <header><div class="brand"><span class="brand-mark">A</span> AFTERIMAGE</div><div class="topline">A camera experiment <span>● ready</span></div></header>
+    <header><div class="brand"><span class="brand-mark">A</span> AFTERIMAGE</div><div class="topline">ANATOMY MIRROR <b> / <span id="headerStatus">STANDBY</span></b></div></header>
     <main>
       <section>
-        <p class="eyebrow">01 / Look closer</p>
-        <h1>A mirror with<br />another <em>side.</em></h1>
-        <p class="intro">Step into the frame. A live camera effect turns your reflection into a curious, ghostly study of light and shape.</p>
-        <div class="stage">
+        <p class="eyebrow">01 / Live anatomy study</p>
+        <h1>See beneath<br />the <em>surface.</em></h1>
+        <p class="intro">A live-tracked anatomy mirror. Choose a layer and watch the skull, brain, or facial musculature follow your movement.</p>
+        <div class="stage" id="stage">
           <video id="feed" class="off" autoplay playsinline muted></video>
-          <div id="placeholder" class="placeholder"><div><div class="silhouette"></div><p>Your reflection will appear here</p></div></div>
-          <div class="frame-label">FIELD / 01</div><div class="live" id="live">STANDBY</div><div class="scanline"></div>
+          <canvas id="overlay" aria-hidden="true"></canvas>
+          <div id="placeholder" class="placeholder"><div><svg class="ghost" viewBox="0 0 110 172" fill="none" stroke="#c4ff72" stroke-width="1.4" aria-hidden="true"><path d="M55 9C28 9 17 30 19 58l5 40 10 13 2 39 19 14 19-14 2-39 10-13 5-40C93 30 82 9 55 9Z"/><ellipse cx="39" cy="67" rx="11" ry="13"/><ellipse cx="71" cy="67" rx="11" ry="13"/><path d="m55 71-8 18 8 5 8-5-8-18ZM36 111h38m-35 9h32m-28 9h24m-18-8v9m10-9v9"/><path d="M33 28q8-9 16 0t16 0 15 0M42 158h26"/></svg><p>Enable camera to start tracking</p></div></div>
+          <div class="frame-label">FACE TRACK / <span id="faceNumber">00</span></div><div class="live" id="live">STANDBY</div><div class="scanline"></div>
         </div>
-        <div class="stage-footer"><span>LOCAL CAMERA FEED</span><span id="resolution">NO SIGNAL</span></div>
+        <div class="stage-footer"><span>ON-DEVICE FACE LANDMARKS</span><span id="resolution">NO SIGNAL</span><span id="trackerStatus"><b>READY</b></span></div>
         <div id="error" role="status"></div>
       </section>
       <aside class="controls">
-        <div class="control-head"><h2>Set the scene</h2><span class="index">CONTROLS / 02</span></div>
-        <button id="start" class="btn"><span>Enable camera</span><span>↗</span></button>
+        <div class="control-head"><h2>Choose anatomy</h2><span class="index">LAYERS / 03</span></div>
+        <div class="modes" role="group" aria-label="Anatomy layer">
+          <button class="mode" data-mode="skull" aria-pressed="true">SKULL</button>
+          <button class="mode" data-mode="brain" aria-pressed="false">BRAIN</button>
+          <button class="mode" data-mode="muscles" aria-pressed="false">MUSCLES</button>
+        </div>
+        <button id="start" class="btn"><span>Start face tracking</span><span>↗</span></button>
         <button id="stop" class="btn secondary" disabled><span>End session</span><span>×</span></button>
-        <p class="control-note">Your browser will ask for camera access. The video is processed in this tab and is never uploaded.</p>
-        <label class="slider-label" for="intensity"><span>AFTERIMAGE INTENSITY</span><span id="intensityValue">70%</span></label>
+        <p class="control-note">Allow camera access when prompted. Face landmarks and drawing stay on this device; no video is uploaded.</p>
+        <label class="slider-label" for="intensity"><span>OVERLAY GLOW</span><span id="intensityValue">70%</span></label>
         <input id="intensity" type="range" min="20" max="100" value="70" />
-        <div class="disclaimer"><b>For play, not diagnosis</b>This is a visual camera effect. It does not reveal bones, organs, or medical information.</div>
+        <div class="stats"><div class="stat"><small>Tracking</small><strong id="trackingValue">IDLE</strong></div><div class="stat"><small>Frame rate</small><strong id="fpsValue">— FPS</strong></div></div>
+        <div class="disclaimer"><b>Visual study only</b>Illustrative overlays are not medical imaging or diagnostic information.</div>
       </aside>
     </main>
-    <footer><span>AFTERIMAGE / CAMERA STUDY</span><span>MADE FOR THE CURIOUS</span></footer>
+    <footer><span>AFTERIMAGE / REAL-TIME FACE TRACK</span><span>CAMERA + LANDMARKS STAY ON DEVICE</span></footer>
   </div>
-  <script>
+  <script type="module">
+    import { FaceLandmarker, FilesetResolver } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/vision_bundle.mjs';
+
     const video = document.querySelector('#feed');
+    const canvas = document.querySelector('#overlay');
+    const ctx = canvas.getContext('2d');
+    const stage = document.querySelector('#stage');
     const placeholder = document.querySelector('#placeholder');
     const startButton = document.querySelector('#start');
     const stopButton = document.querySelector('#stop');
     const live = document.querySelector('#live');
     const error = document.querySelector('#error');
+    const trackerStatus = document.querySelector('#trackerStatus');
+    const trackingValue = document.querySelector('#trackingValue');
     let stream;
+    let landmarker;
+    let running = false;
+    let lastVideoTime = -1;
+    let lastDetection = 0;
+    let frames = 0;
+    let fpsStarted = performance.now();
+    let mode = 'skull';
+    let intensity = .7;
+    let lastFace;
 
+    function resizeCanvas() {
+      const rect = stage.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    new ResizeObserver(resizeCanvas).observe(stage);
+
+    function point(lm, i) {
+      const scale = Math.max(stage.clientWidth / video.videoWidth, stage.clientHeight / video.videoHeight);
+      const cropX = (video.videoWidth * scale - stage.clientWidth) / 2;
+      const cropY = (video.videoHeight * scale - stage.clientHeight) / 2;
+      return { x: lm[i].x * video.videoWidth * scale - cropX, y: lm[i].y * video.videoHeight * scale - cropY };
+    }
+    function strokePath(points, close = false, width = 1.5) {
+      ctx.beginPath();
+      points.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+      if (close) ctx.closePath();
+      ctx.lineWidth = width; ctx.stroke();
+    }
+    function eyeSocket(lm, ids) {
+      const pts = ids.map(i => point(lm, i));
+      ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.closePath();
+      ctx.fillStyle = 'rgba(3,12,9,.72)'; ctx.fill(); ctx.stroke();
+      const center = pts.reduce((a, p) => ({x:a.x+p.x/pts.length,y:a.y+p.y/pts.length}), {x:0,y:0});
+      ctx.beginPath(); ctx.arc(center.x,center.y,2.1,0,Math.PI*2); ctx.fillStyle='#d8ff9d'; ctx.fill();
+    }
+    function drawSkull(lm) {
+      const outline = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109,10].map(i=>point(lm,i));
+      ctx.strokeStyle = `rgba(196,255,114,${.72 + intensity*.28})`;
+      ctx.fillStyle = `rgba(9,24,17,${.18 + intensity*.14})`;
+      ctx.shadowColor = '#baff72'; ctx.shadowBlur = 9 + intensity*12;
+      ctx.beginPath(); outline.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.shadowBlur = 0;
+      eyeSocket(lm,[33,160,158,133,153,144]); eyeSocket(lm,[362,385,387,263,373,380]);
+      const nose = [point(lm,168),point(lm,6),point(lm,197),point(lm,5),point(lm,2)];
+      ctx.beginPath(); ctx.moveTo(nose[0].x,nose[0].y); ctx.lineTo(nose[1].x,nose[1].y); ctx.lineTo(nose[2].x,nose[2].y); ctx.lineTo(nose[3].x,nose[3].y); ctx.lineTo(nose[4].x,nose[4].y); ctx.closePath();
+      ctx.fillStyle='rgba(4,12,8,.8)';ctx.fill();ctx.stroke();
+      const left=point(lm,61),right=point(lm,291),top=point(lm,13),bottom=point(lm,14);
+      const width=Math.hypot(right.x-left.x,right.y-left.y);
+      ctx.beginPath();ctx.moveTo(left.x,left.y);ctx.quadraticCurveTo((left.x+right.x)/2,top.y-2,right.x,right.y);ctx.quadraticCurveTo((left.x+right.x)/2,bottom.y+3,left.x,left.y);ctx.closePath();
+      ctx.fillStyle='rgba(4,12,8,.82)';ctx.fill();ctx.stroke();
+      const toothCount=8;
+      for(let i=1;i<toothCount;i++){const t=i/toothCount;const x=left.x+(right.x-left.x)*t;const y=top.y+(bottom.y-top.y)*.5;ctx.beginPath();ctx.moveTo(x,y-3);ctx.lineTo(x,y+4);ctx.stroke()}
+      const jawL=point(lm,172),jawR=point(lm,397),chin=point(lm,152);
+      ctx.beginPath();ctx.moveTo(jawL.x,jawL.y);ctx.quadraticCurveTo(chin.x-4,chin.y+7,chin.x,chin.y);ctx.quadraticCurveTo(chin.x+4,chin.y+7,jawR.x,jawR.y);ctx.stroke();
+      ctx.lineWidth=1;ctx.globalAlpha=.72;
+      for(let i=0;i<5;i++){const t=(i+1)/6;const y=top.y+(bottom.y-top.y)*t;ctx.beginPath();ctx.moveTo(left.x+5,y);ctx.lineTo(right.x-5,y);ctx.stroke()}
+      ctx.globalAlpha=1;
+      drawNeck(lm);
+    }
+    function drawNeck(lm) {
+      const jaw=point(lm,152), left=point(lm,234), right=point(lm,454);
+      const w=Math.hypot(right.x-left.x,right.y-left.y);
+      const cx=jaw.x, top=jaw.y+2, bottom=Math.min(stage.clientHeight-8,top+w*.78);
+      ctx.strokeStyle='rgba(128,242,221,.7)';ctx.fillStyle='rgba(7,22,20,.24)';ctx.shadowColor='#80f2dd';ctx.shadowBlur=5;
+      ctx.beginPath();ctx.moveTo(cx-w*.2,top);ctx.lineTo(cx-w*.17,bottom);ctx.quadraticCurveTo(cx,bottom+w*.07,cx+w*.17,bottom);ctx.lineTo(cx+w*.2,top);ctx.closePath();ctx.fill();ctx.stroke();ctx.shadowBlur=0;
+      for(let i=0;i<6;i++){const y=top+(bottom-top)*(i+.5)/6;ctx.beginPath();ctx.roundRect(cx-w*.13,y,w*.26,Math.max(3,w*.035),3);ctx.stroke()}
+      ctx.beginPath();ctx.moveTo(cx-w*.43,bottom-w*.04);ctx.quadraticCurveTo(cx,bottom+w*.03,cx+w*.43,bottom-w*.04);ctx.stroke();
+    }
+    function drawBrain(lm) {
+      const left=point(lm,70),right=point(lm,300),top=point(lm,10),eyeL=point(lm,159),eyeR=point(lm,386);
+      const cx=(left.x+right.x)/2, w=Math.hypot(right.x-left.x,right.y-left.y)*.72;
+      const browY=(eyeL.y+eyeR.y)/2, y0=top.y+(browY-top.y)*.12, y1=browY-w*.03;
+      ctx.strokeStyle=`rgba(196,255,114,${.7+intensity*.3})`;ctx.fillStyle=`rgba(130,217,96,${.13+intensity*.18})`;
+      ctx.shadowColor='#c4ff72';ctx.shadowBlur=12+intensity*13;
+      ctx.beginPath();ctx.moveTo(cx,y0);ctx.bezierCurveTo(cx-w*.26,y0-w*.11,cx-w*.47,y0+w*.08,cx-w*.46,y1-w*.06);ctx.bezierCurveTo(cx-w*.43,y1+w*.04,cx-w*.18,y1+w*.07,cx,y1+w*.02);ctx.bezierCurveTo(cx+w*.18,y1+w*.07,cx+w*.43,y1+w*.04,cx+w*.46,y1-w*.06);ctx.bezierCurveTo(cx+w*.47,y0+w*.08,cx+w*.26,y0-w*.11,cx,y0);ctx.closePath();ctx.fill();ctx.stroke();ctx.shadowBlur=0;
+      for(const side of [-1,1]) for(let i=0;i<4;i++) { const sx=cx+side*w*(.08+i*.083); const sy=y0+w*(.1+(i%2)*.09);ctx.beginPath();ctx.moveTo(sx,sy);ctx.bezierCurveTo(sx-side*w*.13,sy+w*.08,sx+side*w*.06,sy+w*.13,sx-side*w*.03,sy+w*.22);ctx.stroke() }
+      ctx.beginPath();ctx.moveTo(cx,y0+3);ctx.lineTo(cx,y1);ctx.stroke();
+    }
+    function drawMuscles(lm) {
+      const left=point(lm,234),right=point(lm,454),nose=point(lm,1),chin=point(lm,152),eyeL=point(lm,33),eyeR=point(lm,263);
+      const w=Math.hypot(right.x-left.x,right.y-left.y), h=Math.hypot(chin.y-nose.y,chin.x-nose.x);
+      ctx.strokeStyle=`rgba(255,132,111,${.55+intensity*.38})`;ctx.fillStyle=`rgba(246,100,88,${.12+intensity*.13})`;ctx.shadowColor='#ff7666';ctx.shadowBlur=9+intensity*10;
+      for(const side of [-1,1]) {
+        const temple={x:nose.x+side*w*.39,y:eyeL.y-h*.23}, cheek={x:nose.x+side*w*.3,y:nose.y+h*.28}, jaw={x:nose.x+side*w*.23,y:chin.y-h*.12}, hinge={x:nose.x+side*w*.39,y:chin.y-h*.4};
+        ctx.beginPath();ctx.moveTo(temple.x,temple.y);ctx.quadraticCurveTo(cheek.x+side*w*.1,cheek.y-h*.04,cheek.x,cheek.y);ctx.quadraticCurveTo(jaw.x+side*w*.09,jaw.y, jaw.x,jaw.y);ctx.quadraticCurveTo(hinge.x,hinge.y-h*.08,hinge.x,hinge.y);ctx.quadraticCurveTo(temple.x+side*w*.03,temple.y+h*.06,temple.x,temple.y);ctx.fill();ctx.stroke();
+        for(let i=0;i<4;i++){const t=(i+1)/5;ctx.beginPath();ctx.moveTo(temple.x+side*w*.015,temple.y+h*t*.12);ctx.quadraticCurveTo(cheek.x+side*w*.08,cheek.y-h*.05, jaw.x+side*w*.04, jaw.y+h*(t-.5)*.16);ctx.stroke()}
+      }
+      ctx.shadowBlur=0;
+      const eyeMid={x:(eyeL.x+eyeR.x)/2,y:(eyeL.y+eyeR.y)/2};
+      ctx.beginPath();ctx.moveTo(eyeMid.x-w*.38,eyeMid.y);ctx.quadraticCurveTo(nose.x,eyeMid.y-h*.08,eyeMid.x+w*.38,eyeMid.y);ctx.stroke();
+    }
+    function drawFace(lm) {
+      const w=canvas.clientWidth,h=canvas.clientHeight;
+      ctx.clearRect(0,0,w,h);
+      if(!lm) return;
+      ctx.save();
+      ctx.lineJoin='round';ctx.lineCap='round';ctx.globalAlpha=.55+intensity*.45;
+      if(mode==='skull') drawSkull(lm);
+      if(mode==='brain') drawBrain(lm);
+      if(mode==='muscles') drawMuscles(lm);
+      ctx.restore();
+    }
+    async function loadTracker() {
+      trackerStatus.innerHTML='<b>LOADING MODEL</b>';
+      const vision=await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/wasm');
+      const options={baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task'},runningMode:'VIDEO',numFaces:1,minFaceDetectionConfidence:.55,minFacePresenceConfidence:.55,minTrackingConfidence:.55};
+      try { landmarker=await FaceLandmarker.createFromOptions(vision,{...options,baseOptions:{...options.baseOptions,delegate:'GPU'}}); }
+      catch { landmarker=await FaceLandmarker.createFromOptions(vision,{...options,baseOptions:{...options.baseOptions,delegate:'CPU'}}); }
+      trackerStatus.innerHTML='<b>MODEL READY</b>';
+    }
+    function renderLoop(now) {
+      if(!running) return;
+      if(video.readyState>=2 && video.currentTime!==lastVideoTime && now-lastDetection>40) {
+        lastVideoTime=video.currentTime;lastDetection=now;
+        const result=landmarker.detectForVideo(video,now);
+        lastFace=result.faceLandmarks?.[0];drawFace(lastFace);
+        const found=Boolean(lastFace);
+        live.textContent=found?'TRACKING':'FIND FACE';trackingValue.textContent=found?'LOCKED':'SEARCHING';
+        document.querySelector('#faceNumber').textContent=found?'01':'00';
+        trackerStatus.innerHTML=`<b>${found?'TRACKING':'SEARCHING'}</b>`;
+      }
+      frames++;
+      if(now-fpsStarted>1000){document.querySelector('#fpsValue').textContent=`${Math.round(frames*1000/(now-fpsStarted))} FPS`;frames=0;fpsStarted=now}
+      requestAnimationFrame(renderLoop);
+    }
     async function startCamera() {
-      error.style.display = 'none';
-      startButton.disabled = true;
-      startButton.querySelector('span').textContent = 'Requesting access…';
+      error.style.display='none';startButton.disabled=true;startButton.querySelector('span').textContent='Starting face tracker…';
       try {
-        if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera access needs a secure page (HTTPS or localhost) and a supported browser.');
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
-        video.srcObject = stream;
-        await video.play();
-        video.classList.remove('off');
-        placeholder.classList.add('hidden');
-        live.textContent = 'LIVE';
-        document.querySelector('#resolution').textContent = `${video.videoWidth} × ${video.videoHeight}`;
-        startButton.querySelector('span').textContent = 'Camera enabled';
-        stopButton.disabled = false;
-      } catch (err) {
-        startButton.disabled = false;
-        startButton.querySelector('span').textContent = 'Enable camera';
-        error.textContent = err.name === 'NotAllowedError' ? 'Camera access was blocked. Allow camera access in your browser settings, then try again.' : err.message || 'The camera could not be started. Check that it is connected and try again.';
-        error.style.display = 'block';
+        if(!navigator.mediaDevices?.getUserMedia) throw new Error('Camera access requires HTTPS (or localhost) and a modern browser.');
+        if(!landmarker) await loadTracker();
+        stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}},audio:false});
+        video.srcObject=stream;await video.play();
+        video.classList.remove('off');placeholder.classList.add('hidden');resizeCanvas();
+        document.querySelector('#resolution').textContent=`${video.videoWidth} × ${video.videoHeight}`;
+        document.querySelector('#headerStatus').textContent='CAMERA ACTIVE';startButton.querySelector('span').textContent='Face tracking active';stopButton.disabled=false;
+        running=true;fpsStarted=performance.now();requestAnimationFrame(renderLoop);
+      } catch(err) {
+        stream?.getTracks().forEach(track=>track.stop());stream=undefined;
+        startButton.disabled=false;startButton.querySelector('span').textContent='Start face tracking';
+        trackerStatus.innerHTML='<b>NOT CONNECTED</b>';
+        error.textContent=err.name==='NotAllowedError'?'Camera access was blocked. Allow camera access in your browser settings, then try again.':(err.message||'The face tracker could not start. Check your connection and camera, then retry.');error.style.display='block';
       }
     }
     function stopCamera() {
-      stream?.getTracks().forEach(track => track.stop());
-      stream = undefined;
-      video.srcObject = null;
-      video.classList.add('off');
-      placeholder.classList.remove('hidden');
-      live.textContent = 'STANDBY';
-      document.querySelector('#resolution').textContent = 'NO SIGNAL';
-      startButton.disabled = false;
-      startButton.querySelector('span').textContent = 'Enable camera';
-      stopButton.disabled = true;
+      running=false;stream?.getTracks().forEach(track=>track.stop());stream=undefined;
+      video.srcObject=null;video.classList.add('off');placeholder.classList.remove('hidden');ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
+      live.textContent='STANDBY';trackingValue.textContent='IDLE';trackerStatus.innerHTML='<b>READY</b>';
+      document.querySelector('#headerStatus').textContent='STANDBY';document.querySelector('#resolution').textContent='NO SIGNAL';document.querySelector('#fpsValue').textContent='— FPS';document.querySelector('#faceNumber').textContent='00';
+      startButton.disabled=false;startButton.querySelector('span').textContent='Start face tracking';stopButton.disabled=true;
     }
-    startButton.addEventListener('click', startCamera);
-    stopButton.addEventListener('click', stopCamera);
-    document.querySelector('#intensity').addEventListener('input', event => {
-      const value = Number(event.target.value);
-      document.querySelector('#intensityValue').textContent = `${value}%`;
-      video.style.filter = `grayscale(1) contrast(${1 + value / 500}) brightness(1.04) sepia(.2) hue-rotate(45deg) saturate(${.7 + value / 100})`;
-      document.querySelector('.scanline').style.opacity = value / 100;
-    });
-    window.addEventListener('pagehide', stopCamera);
+    startButton.addEventListener('click',startCamera);stopButton.addEventListener('click',stopCamera);
+    document.querySelectorAll('.mode').forEach(button=>button.addEventListener('click',()=>{mode=button.dataset.mode;document.querySelectorAll('.mode').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));if(lastFace)drawFace(lastFace)}));
+    document.querySelector('#intensity').addEventListener('input',event=>{intensity=Number(event.target.value)/100;document.querySelector('#intensityValue').textContent=`${event.target.value}%`;document.querySelector('.scanline').style.opacity=String(intensity);if(lastFace)drawFace(lastFace)});
+    window.addEventListener('pagehide',stopCamera);
   </script>
 </body>
 </html>

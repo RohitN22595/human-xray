@@ -1,41 +1,41 @@
 # Afterimage
 
-Afterimage is a small, browser-based camera mirror experiment. It uses a live webcam feed and CSS filters to create a high-contrast, x-ray-inspired look, with a minimal control panel and adjustable effect intensity.
+Afterimage is a live face-tracking anatomy mirror. Select an overlay and the skull, brain, or facial muscle illustration follows your face as you move in front of the camera.
 
-> This is a visual effect only. It does not produce or simulate a medical X-ray and cannot reveal bones, organs, or other information beneath the skin.
+> This is an artistic camera effect. It does not show real anatomy, create X-ray images, or provide medical information.
 
-## Run it
+## Run locally
 
-Camera access is available only in a secure browser context: use `https://` when hosted, or `localhost` for local development.
+Camera access requires a secure context: use HTTPS when hosted or `localhost` during local development.
 
-The project has no build step or dependencies. From the project folder, start a local server, for example:
+There is no build step. From this folder, start a static web server:
 
 ```bash
 python -m http.server 8000
 ```
 
-Then open [http://localhost:8000](http://localhost:8000) and select **Enable camera**. Allow camera access when prompted. Use **End session** to stop the camera.
+Open [http://localhost:8000](http://localhost:8000), allow camera access, and choose an anatomy layer. The first start downloads the MediaPipe Vision runtime and face landmark model. A network connection is needed to load those resources.
 
-## Features
+## Layers and controls
 
-- Live, mirrored webcam preview
-- Stylized monochrome and green-tinted visual treatment
-- Adjustable effect intensity
-- Responsive layout for desktop and mobile
-- Camera video stays in the browser tab and is not uploaded by this app
+- **Skull** — tracked skull outline, eye sockets, nasal cavity, teeth, jaw, and neck vertebrae
+- **Brain** — a tracked brain illustration with lobe folds
+- **Muscles** — a tracked facial muscle illustration
+- **Overlay glow** — adjusts the illustration intensity
+- **End session** — stops the local webcam stream
 
 ## Privacy
 
-The page requests camera access only after you choose **Enable camera**. Video is displayed locally in the page. No analytics, accounts, or server-side video processing are included.
+The camera starts only after you click **Start face tracking** and grant permission. MediaPipe runs face landmark detection locally in the browser. The camera frames are not uploaded by this app. The library and model files are fetched from jsDelivr and Google Cloud when first needed.
 
 ## Browser support
 
-Use a modern browser with `getUserMedia` support. Camera access requires HTTPS or localhost. If access is denied, update the browser's site permissions and try again.
+Use a current Chrome, Edge, Firefox, or Safari browser with WebAssembly and camera support. The camera API requires HTTPS or localhost. For best tracking performance, use a device with hardware acceleration enabled.
 
-## Project files
+## Files
 
-- `index.html` — complete standalone app, styles, and camera controls
-- `README.md` — setup, feature, and privacy notes
+- `index.html` — app UI, camera handling, local face tracking, and original canvas anatomy illustrations
+- `README.md` — setup and feature notes
 
 ## License
 
