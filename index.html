@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#07110f" />
+  <meta name="description" content="A playful, browser-based camera mirror with an atmospheric x-ray inspired visual effect." />
+  <title>AFTERIMAGE — Camera Mirror</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root { color-scheme: dark; --ink:#eaf4eb; --muted:#81928a; --line:#26342e; --acid:#c4ff72; --panel:#0c1713; }
+    * { box-sizing:border-box }
+    body { margin:0; min-height:100vh; background:#07110f; color:var(--ink); font-family:'Space Grotesk',sans-serif; }
+    button { color:inherit; font:inherit; cursor:pointer }
+    .shell { max-width:1440px; margin:auto; padding:0 5.2vw 44px }
+    header { height:86px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line) }
+    .brand { display:flex; align-items:center; gap:12px; font-weight:700; letter-spacing:.12em; font-size:14px }
+    .brand-mark { width:28px; height:28px; display:grid; place-items:center; border:1px solid var(--acid); color:var(--acid); border-radius:50%; font-size:13px }
+    .topline,.eyebrow,.meta,.btn,.hint { font-family:'DM Mono',monospace; text-transform:uppercase; letter-spacing:.12em }
+    .topline { color:var(--muted); font-size:10px }
+    .topline span { color:var(--acid); margin-left:8px }
+    main { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(280px,.7fr); gap:5.4vw; padding-top:64px; align-items:start }
+    .eyebrow { color:var(--acid); font-size:10px; margin:0 0 18px }
+    h1 { font-size:clamp(46px,7vw,94px); letter-spacing:-.075em; line-height:.92; font-weight:500; margin:0; max-width:750px }
+    h1 em { color:var(--acid); font-style:normal }
+    .intro { color:#a5b3ac; max-width:480px; font-size:15px; line-height:1.7; margin:24px 0 30px }
+    .stage { position:relative; background:#111c18; border:1px solid #34453d; aspect-ratio:16/10; overflow:hidden; border-radius:4px; }
+    .stage:after { content:''; position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg,rgba(4,12,9,.5),transparent 25%,transparent 70%,rgba(4,12,9,.58)); z-index:2 }
+    #feed { width:100%; height:100%; object-fit:cover; transform:scaleX(-1); display:block; filter:grayscale(1) contrast(1.16) brightness(1.14) sepia(.2) hue-rotate(45deg) saturate(1.45); }
+    #feed.off { display:none }
+    .placeholder { position:absolute; inset:0; display:grid; place-items:center; text-align:center; color:#75877e; background:radial-gradient(ellipse at center,#1b3025 0,#111c18 56%,#0c1512 100%); }
+    .placeholder.hidden { display:none }
+    .silhouette { width:110px; height:172px; opacity:.22; position:relative; filter:drop-shadow(0 0 22px #baff72) }
+    .silhouette:before { content:''; display:block; margin:auto; width:62px;height:76px;border:1px solid var(--acid);border-radius:50% 50% 45% 45%; }
+    .silhouette:after { content:''; position:absolute; left:8px;right:8px;top:84px;height:82px;border:1px solid var(--acid);border-radius:48% 48% 8% 8%; }
+    .placeholder p { font:10px 'DM Mono',monospace; letter-spacing:.14em; text-transform:uppercase; margin:15px 0 0 }
+    .frame-label { position:absolute; z-index:3; top:18px; left:20px; font:10px 'DM Mono',monospace; color:#d8e7d8; letter-spacing:.12em }
+    .live { position:absolute; z-index:3; right:18px;top:17px;color:var(--acid);font:10px 'DM Mono',monospace;letter-spacing:.14em }
+    .live:before { content:''; display:inline-block; width:6px;height:6px;background:var(--acid);border-radius:50%;margin:0 8px 1px 0;box-shadow:0 0 10px var(--acid) }
+    .scanline { position:absolute; z-index:3; left:0;right:0;top:50%; height:1px;background:rgba(196,255,114,.48);box-shadow:0 0 16px rgba(196,255,114,.45);pointer-events:none }
+    .stage-footer { border:1px solid var(--line); border-top:0; padding:13px 17px; display:flex; justify-content:space-between; color:var(--muted);font:9px 'DM Mono',monospace;letter-spacing:.12em }
+    .controls { padding-top:11px }
+    .control-head { display:flex; justify-content:space-between;align-items:center;padding-bottom:17px;border-bottom:1px solid var(--line);margin-bottom:22px }
+    .control-head h2 { font-size:16px;font-weight:500;margin:0 }
+    .index { font:10px 'DM Mono',monospace;color:var(--muted) }
+    .btn { width:100%; padding:16px 18px; border:1px solid var(--acid); background:var(--acid); color:#101b0b; text-align:left; font-size:10px; font-weight:500; display:flex;justify-content:space-between;align-items:center;transition:.18s }
+    .btn:hover { background:#d7ff9c; transform:translateY(-1px) }
+    .btn.secondary { margin-top:10px;background:transparent;color:var(--ink);border-color:#405148 }
+    .btn.secondary:hover { border-color:var(--acid);color:var(--acid);background:transparent }
+    .btn:disabled { opacity:.45;cursor:wait;transform:none }
+    .control-note { margin:18px 0 30px;color:#778980;font-size:12px;line-height:1.6 }
+    .slider-label { display:flex;justify-content:space-between;font:9px 'DM Mono',monospace;letter-spacing:.1em;color:#96a69c;margin:23px 0 12px }
+    input[type=range] { width:100%; accent-color:var(--acid);height:3px }
+    .disclaimer { margin-top:28px;border-left:2px solid #526e46;padding:11px 0 11px 14px;color:#84938b;font-size:11px;line-height:1.55 }
+    .disclaimer b { display:block;color:#bdcbbf;font:9px 'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px }
+    footer { margin-top:58px;padding-top:18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;color:#62736a;font:9px 'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase }
+    #error { display:none;color:#ff9a82;font-size:11px;line-height:1.55;margin-top:12px }
+    @media(max-width:800px) { .shell{padding:0 22px 28px} header{height:68px} main{grid-template-columns:1fr;gap:35px;padding-top:45px} .controls{padding-top:0} footer{margin-top:40px} }
+    @media(max-width:450px) { .topline{font-size:8px}.stage{aspect-ratio:4/3}.stage-footer{font-size:8px}.intro{font-size:14px} }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header><div class="brand"><span class="brand-mark">A</span> AFTERIMAGE</div><div class="topline">A camera experiment <span>● ready</span></div></header>
+    <main>
+      <section>
+        <p class="eyebrow">01 / Look closer</p>
+        <h1>A mirror with<br />another <em>side.</em></h1>
+        <p class="intro">Step into the frame. A live camera effect turns your reflection into a curious, ghostly study of light and shape.</p>
+        <div class="stage">
+          <video id="feed" class="off" autoplay playsinline muted></video>
+          <div id="placeholder" class="placeholder"><div><div class="silhouette"></div><p>Your reflection will appear here</p></div></div>
+          <div class="frame-label">FIELD / 01</div><div class="live" id="live">STANDBY</div><div class="scanline"></div>
+        </div>
+        <div class="stage-footer"><span>LOCAL CAMERA FEED</span><span id="resolution">NO SIGNAL</span></div>
+        <div id="error" role="status"></div>
+      </section>
+      <aside class="controls">
+        <div class="control-head"><h2>Set the scene</h2><span class="index">CONTROLS / 02</span></div>
+        <button id="start" class="btn"><span>Enable camera</span><span>↗</span></button>
+        <button id="stop" class="btn secondary" disabled><span>End session</span><span>×</span></button>
+        <p class="control-note">Your browser will ask for camera access. The video is processed in this tab and is never uploaded.</p>
+        <label class="slider-label" for="intensity"><span>AFTERIMAGE INTENSITY</span><span id="intensityValue">70%</span></label>
+        <input id="intensity" type="range" min="20" max="100" value="70" />
+        <div class="disclaimer"><b>For play, not diagnosis</b>This is a visual camera effect. It does not reveal bones, organs, or medical information.</div>
+      </aside>
+    </main>
+    <footer><span>AFTERIMAGE / CAMERA STUDY</span><span>MADE FOR THE CURIOUS</span></footer>
+  </div>
+  <script>
+    const video = document.querySelector('#feed');
+    const placeholder = document.querySelector('#placeholder');
+    const startButton = document.querySelector('#start');
+    const stopButton = document.querySelector('#stop');
+    const live = document.querySelector('#live');
+    const error = document.querySelector('#error');
+    let stream;
+
+    async function startCamera() {
+      error.style.display = 'none';
+      startButton.disabled = true;
+      startButton.querySelector('span').textContent = 'Requesting access…';
+      try {
+        if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera access needs a secure page (HTTPS or localhost) and a supported browser.');
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+        video.srcObject = stream;
+        await video.play();
+        video.classList.remove('off');
+        placeholder.classList.add('hidden');
+        live.textContent = 'LIVE';
+        document.querySelector('#resolution').textContent = `${video.videoWidth} × ${video.videoHeight}`;
+        startButton.querySelector('span').textContent = 'Camera enabled';
+        stopButton.disabled = false;
+      } catch (err) {
+        startButton.disabled = false;
+        startButton.querySelector('span').textContent = 'Enable camera';
+        error.textContent = err.name === 'NotAllowedError' ? 'Camera access was blocked. Allow camera access in your browser settings, then try again.' : err.message || 'The camera could not be started. Check that it is connected and try again.';
+        error.style.display = 'block';
+      }
+    }
+    function stopCamera() {
+      stream?.getTracks().forEach(track => track.stop());
+      stream = undefined;
+      video.srcObject = null;
+      video.classList.add('off');
+      placeholder.classList.remove('hidden');
+      live.textContent = 'STANDBY';
+      document.querySelector('#resolution').textContent = 'NO SIGNAL';
+      startButton.disabled = false;
+      startButton.querySelector('span').textContent = 'Enable camera';
+      stopButton.disabled = true;
+    }
+    startButton.addEventListener('click', startCamera);
+    stopButton.addEventListener('click', stopCamera);
+    document.querySelector('#intensity').addEventListener('input', event => {
+      const value = Number(event.target.value);
+      document.querySelector('#intensityValue').textContent = `${value}%`;
+      video.style.filter = `grayscale(1) contrast(${1 + value / 500}) brightness(1.04) sepia(.2) hue-rotate(45deg) saturate(${.7 + value / 100})`;
+      document.querySelector('.scanline').style.opacity = value / 100;
+    });
+    window.addEventListener('pagehide', stopCamera);
+  </script>
+</body>
+</html>
